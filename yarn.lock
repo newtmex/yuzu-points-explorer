@@ -1661,9 +1661,9 @@ hasown@^2.0.2:
     function-bind "^1.1.2"
 
 hono@^4.5.0:
-  version "4.6.18"
-  resolved "https://registry.yarnpkg.com/hono/-/hono-4.6.18.tgz#18fdc3cfe1540c5aa286a94b2ed5a66fce87241b"
-  integrity sha512-Fu7hEPvdwtPG8LqSAiPn8p8HjD+PDxrP/HVnwRBnwtVKOn5zDDKsw0ma2Xt58oq97Rlp3t/mRNADEV/Ym6cDng==
+  version "4.6.19"
+  resolved "https://registry.yarnpkg.com/hono/-/hono-4.6.19.tgz#2b9daa01282061acd907c64a73fbd43f1a58e541"
+  integrity sha512-Xw5DwU2cewEsQ1DkDCdy6aBJkEBARl5loovoL1gL3/gw81RdaPbXrNJYp3LoQpzpJ7ECC/1OFi/vn3UZTLHFEw==
 
 http-terminator@^3.2.0:
   version "3.2.0"
@@ -2893,9 +2893,9 @@ value-or-promise@^1.0.12:
   integrity sha512-Z6Uz+TYwEqE7ZN50gwn+1LCVo9ZVrpxRPOhOLnncYkY1ZzOYtrX8Fwf/rFktZ8R5mJms6EZf5TqNOMeZmnPq9Q==
 
 viem@^2.21.3:
-  version "2.22.13"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-2.22.13.tgz#518c3286864cfc25fd8f028eee5a07078cc99349"
-  integrity sha512-MaQKY5DUQ5SnZJPMytp5nTgvRu7N3wzvBhY31/9VT4lxDZAcQolqYEK3EqP+cdAD8jl0YmGuoJlfW9D1crqlGg==
+  version "2.22.14"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.22.14.tgz#acf1367704b29f0c00a58260702c9bee05c5dcbd"
+  integrity sha512-HfWnMmSPHNY+F3+I01ZKvIbwdn8qZUEhV/rzBi094F6gmqHA1KBXdF7P9po5/OYkvBjzxduUlLBgownyZkV+uA==
   dependencies:
     "@noble/curves" "1.8.1"
     "@noble/hashes" "1.7.1"
