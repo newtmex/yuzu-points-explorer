@@ -28,9 +28,11 @@ export default async function (
     db: ApiContext["db"] | Context["db"]["sql"],
     broadcast: boolean = false
 ) {
-    const { timestamp: _ts, availableTokenIds, lastTimestamp } = await landAvailInfo(db);
-
-    if(_ts-lastTimestamp >60) return {};
+    const {
+        timestamp: _ts,
+        availableTokenIds,
+        lastTimestamp,
+    } = await landAvailInfo(db);
 
     const timestamp = BigInt(_ts);
     let tokenIds: bigint[] = (
@@ -111,7 +113,7 @@ export default async function (
         ),
     };
 
-    if (broadcast) {
+    if (broadcast && _ts - lastTimestamp <= 3600) {
         const lastBroadcast = await db
             .select()
             .from(broadcastLog)
