@@ -11,6 +11,7 @@ export const eduLandNFTs = onchainTable("edu_land_nfts", (t) => ({
     endDate: t.bigint().notNull(),
     fee: t.bigint().notNull(),
     renter: t.hex().notNull(),
+    timestamp: t.bigint().notNull(),
 }));
 
 export const broadcastLog = onchainTable("broadcast_log", (t) => ({

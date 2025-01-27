@@ -1,8 +1,10 @@
 import { ApiContext, Context } from "ponder:registry";
-import { createPublicClient, getContract, http } from "viem";
+import { createPublicClient, getContract, http, zeroAddress } from "viem";
 import { contracts } from "./ponder.config";
 import { broadcastLog, eduLandNFTs, pointClaim } from "ponder:schema";
 import { asc, desc, gt, gte, replaceBigInts, sum } from "ponder";
+import { bot } from "./bot";
+import landAvailInfo from "./landAvailInfo";
 
 const publicClient = createPublicClient({
     transport: http(
@@ -16,44 +18,36 @@ const EDULandRental = getContract({
     client: publicClient,
 });
 
+const EduLand = getContract({
+    abi: contracts.EduLand.abi,
+    address: contracts.EduLand.address,
+    client: publicClient,
+});
+
 export default async function (
     db: ApiContext["db"] | Context["db"]["sql"],
     broadcast: boolean = false
 ) {
-    const [{ timestamp }, rentedTokenIds] = await Promise.all([
-        publicClient.getBlock(),
-        db
-            .select({ tokenId: eduLandNFTs.tokenId })
-            .from(eduLandNFTs)
-            .execute()
-            .then((rows) => rows.map((row) => row.tokenId)),
-    ]);
+    const { timestamp: _ts, availableTokenIds, lastTimestamp } = await landAvailInfo(db);
 
-    const expiredTokenIds = await db
-        .select({ tokenId: eduLandNFTs.tokenId })
-        .from(eduLandNFTs)
-        .orderBy(asc(eduLandNFTs.endDate))
-        .limit(20)
-        .where(gt(eduLandNFTs.endDate, timestamp))
-        .execute()
-        .then((rows) => rows.map((row) => row.tokenId));
+    if(_ts-lastTimestamp >60) return {};
 
-    let tokenIds = [...expiredTokenIds];
+    const timestamp = BigInt(_ts);
+    let tokenIds: bigint[] = (
+        await Promise.allSettled(
+            availableTokenIds.slice(0, 50).map(async (id) => {
+                const owner = await EduLand.read.ownerOf([BigInt(id)]);
 
-    if (tokenIds.length < 20) {
-        const unAvailableTokenIds = rentedTokenIds.filter(
-            (id) => !expiredTokenIds.includes(id)
-        );
+                return BigInt(zeroAddress == owner ? id : 0);
+            })
+        )
+    )
+        .filter((r) => r.status == "fulfilled")
+        .filter(({ value }) => value > 0n)
+        .map((r) => r.value)
+        .slice(0, 20);
 
-        for (let i = 1; i <= 10000 && tokenIds.length < 20; i++) {
-            const tokenId = BigInt(i);
-            if (unAvailableTokenIds.includes(tokenId)) {
-                tokenIds = [...tokenIds, tokenId];
-            }
-        }
-    }
-
-    const totalRented = await db.$count(eduLandNFTs);
+    const totalRented = (await db.$count(eduLandNFTs)) || 0;
 
     const [_30days, _60days] = await Promise.all(
         [30n, 60n].map(async (days) => {
@@ -65,7 +59,7 @@ export default async function (
                           new Array(tokenIds.length).fill(
                               days * 24n * 60n * 60n
                           ),
-                          expiredTokenIds,
+                          [],
                       ])) / BigInt(tokenIds.length);
 
             const qualifyingRecords = await db
@@ -86,16 +80,20 @@ export default async function (
                 0
             );
 
-            return replaceBigInts(
-                {
-                    fee,
-                    totalRentable,
-                    landRentalDeficitDelta:
-                        10_000 - totalRentable - totalRented,
-                    qualifyingRecords,
-                },
-                String
-            );
+            return {
+                ...replaceBigInts(
+                    {
+                        fee,
+                        totalRentable,
+                        landRentalDeficitDelta:
+                            10_000 - totalRentable - totalRented,
+                    },
+                    Number
+                ),
+                qualifyingRecords: qualifyingRecords.map((r) =>
+                    replaceBigInts(r, Number)
+                ),
+            };
         })
     );
 
@@ -103,12 +101,14 @@ export default async function (
         _30days,
         _60days,
         totalRented,
-        yuzuSupply: (
-            await db
-                .select({ supply: sum(pointClaim.balance) })
-                .from(pointClaim)
-                .execute()
-        ).at(0)?.supply,
+        yuzuSupply: Number(
+            (
+                await db
+                    .select({ supply: sum(pointClaim.balance) })
+                    .from(pointClaim)
+                    .execute()
+            ).at(0)?.supply ?? 0
+        ),
     };
 
     if (broadcast) {
@@ -120,9 +120,57 @@ export default async function (
             .execute()
             .then((rows) => rows[0]?.timestamp);
 
-        if (!lastBroadcast || timestamp - lastBroadcast >= 300) {
-            // Your broadcast logic here
-            console.log("Broadcasting info:", JSON.stringify(info, null, 2));
+        if (!lastBroadcast || timestamp - lastBroadcast >= 45) {
+            const gainzUrl = "https://www\\.gainzswap\\.xyz";
+
+            const escapeMarkdownV2 = (text: string) =>
+                text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, "\\$1");
+
+            const formatQualifier = (data: any) =>
+                data?.qualifyingRecords.length
+                    ? `👥 *Top Qualifier:*  
+🔹 *Address:* \`${escapeMarkdownV2(data.qualifyingRecords.at(0)?.address)}\`  
+🔹 *Rentable Land:* ${escapeMarkdownV2(
+                          data.qualifyingRecords
+                              .at(0)
+                              ?.eduLandRentable.toLocaleString()
+                      )}  
+🔹 *Yuzu Balance:* ${escapeMarkdownV2(
+                          data.qualifyingRecords.at(0)?.balance.toLocaleString()
+                      )}`
+                    : "👥 *Top Qualifier:* _No Data Available_";
+
+            const formatReport = (label: string, data: any) =>
+                `📅 *${escapeMarkdownV2(label)}*  
+💰 *Rental Fee:* ${escapeMarkdownV2(data?.fee.toLocaleString())} YUZU  
+🏠 *Total Rentable Land:* ${escapeMarkdownV2(
+                    data?.totalRentable.toLocaleString()
+                )}  
+📊 *Rental Deficit Change:* ${escapeMarkdownV2(
+                    data?.landRentalDeficitDelta?.toLocaleString() ||
+                        "No Deficit"
+                )}  
+${formatQualifier(data)}`;
+
+            const message = `🚀 *EduLand Rental Update\\!* 🌍🏡  
+            
+${formatReport("30 Days Estimation", _30days)}  
+
+${formatReport("60 Days Estimation", _60days)}  
+
+🔢 *Total Rented Land:* ${escapeMarkdownV2(
+                info.totalRented?.toLocaleString() || "Data Not Available"
+            )}  
+💎 *YUZU Supply:* ${escapeMarkdownV2(info.yuzuSupply.toLocaleString())}  
+
+📢 *Stay tuned for more updates\\!*  
+
+🚜✨ Maximise your yield by participating in [GainzSwap ILO](${gainzUrl}) at [${gainzUrl}](${gainzUrl})`;
+
+            await bot.api.sendMessage(process.env.CHANNEL_ID!, message, {
+                parse_mode: "MarkdownV2",
+            });
+
             // Update the timestamp in the database
             await db.insert(broadcastLog).values({ timestamp }).execute();
         }

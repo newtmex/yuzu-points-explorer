@@ -35,7 +35,7 @@ export const contracts = {
         abi: YuzuPoint,
         ...getAddressStartBlock(
             {
-                address: "0xeC018A57360aF8fc07665CcD4b5064b59070573f",
+                address: "0x4429D17e879654fE253dEAdf5EF231e9bCF4C32E",
                 startBlock: 8527,
             },
             1

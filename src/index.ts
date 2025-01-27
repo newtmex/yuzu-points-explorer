@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 import { eduLandNFTs, pointClaim } from "ponder:schema";
 import yuzuSummary from "../yuzuSummary";
+import { bot } from "../bot";
 
 ponder.on(
     "OCPointMerkleClaim:PayoutClaimed",
@@ -44,6 +45,7 @@ ponder.on("EDULandRental:Rental", async ({ event, context: { db } }) => {
         fee: log.fees[index]!,
         beginDate: log.beginDates[index]!,
         endDate: log.endDates[index]!,
+        timestamp: event.block.timestamp,
     }));
 
     const entriesByTokenId = Object.fromEntries(
@@ -92,3 +94,7 @@ ponder.on(
         await yuzuSummary(db.sql, true);
     }
 );
+
+bot.on("message", async (ctx) => {
+    console.log(ctx.chatId);
+});
