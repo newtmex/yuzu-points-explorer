@@ -18,6 +18,7 @@ ponder.on(
             address: YuzuPoint.address,
             functionName: "balances",
             args: [recipient],
+            blockNumber: event.block.number,
         });
 
         await db
