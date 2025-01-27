@@ -6,6 +6,27 @@ import { EDULandRental } from "./abis/EDULandRental";
 import { YuzuPoint } from "./abis/YuzuPoint";
 import { EduLand } from "./abis/EduLand";
 
+import * as fs from "fs";
+
+// Prepare DB CA if present
+if (process.env.DATABASE_CA_CERT) {
+    const dbCertPath = process.env.DATABASE_URL?.split("?")
+        .at(1)
+        ?.split("&")
+        .filter((paramString) => paramString.includes("sslrootcert"))
+        .at(0)
+        ?.split("=")
+        .at(1);
+
+    if (!dbCertPath) {
+        throw new Error(
+            "DATABASE_CA_CERT env variable is set but no sslrootcert param in DATABASE_URL"
+        );
+    }
+
+    fs.writeFileSync(dbCertPath, process.env.DATABASE_CA_CERT);
+}
+
 const getAddressStartBlock = (
     values: {
         address: `0x${string}`;
