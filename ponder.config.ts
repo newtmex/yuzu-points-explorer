@@ -84,7 +84,6 @@ export default createConfig({
             transport: http(
                 process.env.PONDER_RPC_URL_41923 || "http://127.0.0.1:8545"
             ),
-            maxRequestsPerSecond: 1000,
         },
     },
     contracts,
