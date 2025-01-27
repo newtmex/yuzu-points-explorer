@@ -54,16 +54,6 @@ export default async function (db: ApiContext["db"] | Context["db"]["sql"]) {
         expiredTokenIds: expiredTokenIds.map((id) =>
             replaceBigInts(id, String)
         ),
-        timestamp: replaceBigInts(timestamp, Number),
-        lastTimestamp: replaceBigInts(
-            (
-                await db
-                    .select({ lastTimestamp: max(eduLandNFTs.timestamp) })
-                    .from(eduLandNFTs)
-                    .limit(1)
-                    .execute()
-            ).at(0)?.lastTimestamp ?? 0,
-            Number
-        ),
+        timestamp: replaceBigInts(timestamp, Number)
     };
 }
