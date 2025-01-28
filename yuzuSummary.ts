@@ -14,6 +14,7 @@ import {
     sum,
     count,
     lt,
+    avg,
 } from "ponder";
 import { bot } from "./bot";
 
@@ -107,7 +108,7 @@ export default async function (
             )
         );
 
-    const totalRented =
+    const totalRented = BigInt(
         (
             await db
                 .select({ total: count(eduLandNFTs.tokenId) })
@@ -119,7 +120,8 @@ export default async function (
                     )
                 )
                 .execute()
-        ).at(0)?.total || 0;
+        ).at(0)?.total || 0
+    );
 
     const [_30days, _60days] = await Promise.all(
         [30n, 60n].map(async (days) => {
@@ -134,23 +136,38 @@ export default async function (
                           expiredTokenIds,
                       ])) / BigInt(tokenIds.length);
 
-            const qualifyingRecords = await db
-                .select()
-                .from(pointClaim)
-                .where(gte(pointClaim.balance, fee))
-                .orderBy(desc(pointClaim.balance))
-                .execute()
-                .then((results) =>
-                    results.map((result) => ({
-                        eduLandRentable: Number(result.balance / fee),
-                        ...result,
-                    }))
-                );
-
-            const totalRentable = qualifyingRecords.reduce(
-                (acc, cur) => acc + cur.eduLandRentable,
-                0
-            );
+            const [totalRentable, qualifyingRecords] = await Promise.all([
+                db
+                    .select({
+                        averageBal: avg(pointClaim.balance),
+                    })
+                    .from(pointClaim)
+                    .where(gte(pointClaim.balance, fee))
+                    .execute()
+                    .then(
+                        (results) =>
+                            BigInt(
+                                Number(results.at(0)?.averageBal ?? 0).toFixed(
+                                    0
+                                )
+                            ) / fee
+                    ),
+                db
+                    .select()
+                    .from(pointClaim)
+                    .where(gte(pointClaim.balance, fee))
+                    .orderBy(desc(pointClaim.balance))
+                    .limit(1)
+                    .execute()
+                    .then((rs) =>
+                        rs
+                            .map((r) => ({
+                                eduLandRentable: r.balance / fee,
+                                ...r,
+                            }))
+                            .map((r) => replaceBigInts(r, Number))
+                    ),
+            ]);
 
             return {
                 ...replaceBigInts(
@@ -158,13 +175,11 @@ export default async function (
                         fee,
                         totalRentable,
                         landRentalDeficitDelta:
-                            10_000 - totalRentable - totalRented,
+                            10_000n - totalRentable - totalRented,
                     },
                     Number
                 ),
-                qualifyingRecords: qualifyingRecords.map((r) =>
-                    replaceBigInts(r, Number)
-                ),
+                qualifyingRecords,
             };
         })
     );
@@ -186,10 +201,10 @@ export default async function (
     if (shouldBroadcast) {
         const gainzUrl = "https://www\\.gainzswap\\.xyz";
 
-        const escapeMarkdownV2 = (text: string) =>
-            text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, "\\$1");
+        const escapeMarkdownV2 = (text: string | undefined) =>
+            text?.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, "\\$1");
 
-        const formatQualifier = (data: any) =>
+        const formatQualifier = (data: typeof info._30days) =>
             data?.qualifyingRecords.length
                 ? `👥 *Top Qualifier:*  
 🔹 *Address:* \`${escapeMarkdownV2(data.qualifyingRecords.at(0)?.address)}\`  
