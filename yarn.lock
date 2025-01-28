@@ -1273,10 +1273,10 @@ escape-string-regexp@^2.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-2.0.0.tgz#a30304e99daa32e23b2fd20f51babd07cffca344"
   integrity sha512-UpzcLCXolUWcNu5HtVMHYdXJjArjsF9C0aNnquZYY4uW/Vu0miy5YoWvbV345HauVvcAUnpRuhMMcqTcGOY2+w==
 
-eslint-config-ponder@^0.8.32:
-  version "0.8.32"
-  resolved "https://registry.yarnpkg.com/eslint-config-ponder/-/eslint-config-ponder-0.8.32.tgz#a2863f8a21ee6cf2f6cbbf7e2727cbf545ff68a8"
-  integrity sha512-D8ntH8Q+/3wDhxVdZVXyP+DyAeyH0lAS1gstXQKlMOlqelo0w7xaZOD3WTCNa0Kfv32ZiswsgVesyeHkWAZ5Zw==
+eslint-config-ponder@^0.8.7:
+  version "0.8.33"
+  resolved "https://registry.yarnpkg.com/eslint-config-ponder/-/eslint-config-ponder-0.8.33.tgz#7bf347e0c8c3148b66ea4f4ffe2c4149b114fdb1"
+  integrity sha512-b7gufI0tw0/UCVfnuM5ZwjieeezuxRKjz2x88lXPA/4fFFCGnVOx8zEFaCWFKAs0VkFNG/y8Oa7gwz1pw3llXA==
 
 eslint-scope@^7.2.2:
   version "7.2.2"
@@ -2354,10 +2354,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.8.32:
-  version "0.8.32"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.8.32.tgz#4151707a4e017e6aae481b8578770d8ac7187604"
-  integrity sha512-C3sKps6Xq1fF4LtZUZbqTJ+lPQ4ciiUnYfBSvLsVInmeqn2NkeuOiLvlfPE8DwAUueWANbYtYQ0KBwh2z730OA==
+ponder@~0.8.7:
+  version "0.8.33"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.8.33.tgz#91ab16b05b08d250a700585e30a6a5e0daa27c4f"
+  integrity sha512-YyugehvRl0SxhEOQ/v3UZgNIvNIdXoxAlyKXBficmf0jN9Zz/fUJ4tKPdEyFwOB5ZfcMUWlxr6ldjb4N4Jk62A==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
