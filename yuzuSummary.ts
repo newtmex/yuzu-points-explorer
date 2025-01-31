@@ -40,23 +40,46 @@ export default async function (
     db: ApiContext["db"] | Context["db"]["sql"],
     broadcast: boolean = false
 ) {
+    const timestamp = (await publicClient.getBlock()).timestamp;
+
     // Check if the table is empty and populate it
-    if ((await db.$count(eduLandNFTs)) == 0) {
+    if ((await db.$count(eduLandNFTs)) < 10_000) {
         await Promise.all(
-            new Array(10000).fill(0).map((_, index) =>
-                db
+            new Array(10000).fill(0).map(async (_, index) => {
+                const tokenId = BigInt(index + 1);
+                const [renter, [beginDate, endDate, fee]] = await Promise.all([
+                    EduLand.read.ownerOf([tokenId]),
+                    EDULandRental.read.rentals([tokenId]),
+                ]);
+
+                const value = {
+                    tokenId: BigInt(index + 1),
+                    renter,
+                    beginDate,
+                    endDate,
+                    fee,
+                    timestamp,
+                };
+
+                await db
                     .insert(eduLandNFTs)
-                    .values({
-                        tokenId: BigInt(index + 1),
+                    .values(value)
+                    .onConflictDoUpdate({
+                        target: eduLandNFTs.tokenId,
+                        set: {
+                            renter: value.renter,
+                            beginDate: value.beginDate,
+                            endDate: value.endDate,
+                            fee: value.fee,
+                            timestamp: value.timestamp,
+                        },
                     })
-                    .onConflictDoNothing()
-                    .execute()
-            )
+                    .execute();
+            })
         );
     }
 
     let shouldBroadcast = false;
-    let timestamp = BigInt(Number.MAX_SAFE_INTEGER);
 
     if (broadcast) {
         const lastTimestamp =
@@ -67,8 +90,6 @@ export default async function (
                     .limit(1)
                     .execute()
             ).at(0)?.lastTimestamp ?? 0n;
-
-        timestamp = (await publicClient.getBlock()).timestamp;
 
         if (timestamp - lastTimestamp >= 3600) return null;
 
@@ -252,5 +273,5 @@ ${formatReport("60 Days Estimation", _60days)}
         await db.insert(broadcastLog).values({ timestamp }).execute();
     }
 
-    return info;
+    return replaceBigInts(info, Number);
 }
