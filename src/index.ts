@@ -3,96 +3,96 @@ import { eduLandNFTs, pointClaim } from "ponder:schema";
 import yuzuSummary from "../yuzuSummary";
 import { bot } from "../bot";
 
-// ponder.on(
-//     "OCPointMerkleClaim:PayoutClaimed",
-//     async ({
-//         event,
-//         context: {
-//             db,
-//             contracts: { YuzuPoint },
-//             client,
-//         },
-//     }) => {
-//         const { recipient } = event.args;
-//         const balance = await client.readContract({
-//             abi: YuzuPoint.abi,
-//             address: YuzuPoint.address,
-//             functionName: "balances",
-//             args: [recipient],
-//         });
+ponder.on(
+    "OCPointMerkleClaim:PayoutClaimed",
+    async ({
+        event,
+        context: {
+            db,
+            contracts: { YuzuPoint },
+            client,
+        },
+    }) => {
+        const { recipient } = event.args;
+        const balance = await client.readContract({
+            abi: YuzuPoint.abi,
+            address: YuzuPoint.address,
+            functionName: "balances",
+            args: [recipient],
+        });
 
-//         await db
-//             .insert(pointClaim)
-//             .values({
-//                 address: recipient,
-//                 balance,
-//             })
-//             .onConflictDoUpdate(() => ({
-//                 balance,
-//             }));
+        await db
+            .insert(pointClaim)
+            .values({
+                address: recipient,
+                balance,
+            })
+            .onConflictDoUpdate(() => ({
+                balance,
+            }));
 
-//         await yuzuSummary(db.sql, true);
-//     }
-// );
+        await yuzuSummary(db.sql, true);
+    }
+);
 
-// ponder.on("EDULandRental:Rental", async ({ event, context: { db } }) => {
-//     const { renter, ...log } = event.args;
+ponder.on("EDULandRental:Rental", async ({ event, context: { db } }) => {
+    const { renter, ...log } = event.args;
 
-//     const entries = log.tokenIds.map((tokenId, index) => ({
-//         tokenId,
-//         renter,
-//         fee: log.fees[index]!,
-//         beginDate: log.beginDates[index]!,
-//         endDate: log.endDates[index]!,
-//         timestamp: event.block.timestamp,
-//     }));
+    const entries = log.tokenIds.map((tokenId, index) => ({
+        tokenId,
+        renter,
+        fee: log.fees[index]!,
+        beginDate: log.beginDates[index]!,
+        endDate: log.endDates[index]!,
+        timestamp: event.block.timestamp,
+    }));
 
-//     const entriesByTokenId = Object.fromEntries(
-//         entries.map(({ tokenId, ...values }) => [tokenId.toString(), values])
-//     );
+    const entriesByTokenId = Object.fromEntries(
+        entries.map(({ tokenId, ...values }) => [tokenId.toString(), values])
+    );
 
-//     await db
-//         .insert(eduLandNFTs)
-//         .values(entries)
-//         .onConflictDoUpdate(
-//             ({ tokenId }) => entriesByTokenId[tokenId.toString()]!
-//         );
+    await db
+        .insert(eduLandNFTs)
+        .values(entries)
+        .onConflictDoUpdate(
+            ({ tokenId }) => entriesByTokenId[tokenId.toString()]!
+        );
 
-//     await yuzuSummary(db.sql, true);
-// });
+    await yuzuSummary(db.sql, true);
+});
 
-// ponder.on(
-//     "YuzuPoint:Consumed",
-//     async ({
-//         event,
-//         context: {
-//             db,
-//             contracts: { YuzuPoint },
-//             client,
-//         },
-//     }) => {
-//         const recipient = event.args.holder;
+ponder.on(
+    "YuzuPoint:Consumed",
+    async ({
+        event,
+        context: {
+            db,
+            contracts: { YuzuPoint },
+            client,
+        },
+    }) => {
+        const recipient = event.args.holder;
 
-//         const balance = await client.readContract({
-//             abi: YuzuPoint.abi,
-//             address: YuzuPoint.address,
-//             functionName: "balances",
-//             args: [recipient],
-//         });
+        const balance = await client.readContract({
+            abi: YuzuPoint.abi,
+            address: YuzuPoint.address,
+            functionName: "balances",
+            args: [recipient],
+        });
 
-//         await db
-//             .insert(pointClaim)
-//             .values({
-//                 address: recipient,
-//                 balance,
-//             })
-//             .onConflictDoUpdate(() => ({
-//                 balance,
-//             }));
+        await db
+            .insert(pointClaim)
+            .values({
+                address: recipient,
+                balance,
+            })
+            .onConflictDoUpdate(() => ({
+                balance,
+            }));
 
-//         await yuzuSummary(db.sql, true);
-//     }
-// );
+        await yuzuSummary(db.sql, true);
+    }
+);
 
 ponder.on("OCPointMerkleClaim:MerkleRootSet", async ({ event }) => {
     await bot.api.sendMessage(
@@ -100,13 +100,6 @@ ponder.on("OCPointMerkleClaim:MerkleRootSet", async ({ event }) => {
         `YuzuPoints distributed: event: ${JSON.stringify(
             event.args
         )};;; Hash: ${event.transaction.hash}`
-    );
-});
-
-ponder.on("OCPointMerkleClaim:PayoutClaimed", async ({ event }) => {
-    await bot.api.sendMessage(
-        process.env.ADMIN_CHAT_ID!,
-        `YuzuPoints claim: event: ${event.args.recipient};;; Hash: ${event.transaction.hash}`
     );
 });
 
