@@ -61,6 +61,8 @@ export default async function (
                     timestamp,
                 };
 
+                console.log("Cached EDULandNFT", { tokenId, renter });
+
                 await db
                     .insert(eduLandNFTs)
                     .values(value)
@@ -91,7 +93,8 @@ export default async function (
                     .execute()
             ).at(0)?.lastTimestamp ?? 0n;
 
-        if (timestamp - lastTimestamp >= 3600) return null;
+        // Wait till full indexing
+        // if (timestamp - lastTimestamp >= 3600) return null;
 
         const lastBroadcast = await db
             .select()
