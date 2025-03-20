@@ -8,7 +8,8 @@ import { EduLand } from "./abis/EduLand";
 
 import * as fs from "fs";
 
-const startBlock = 11171781;
+const startBlock = Number(process.env.START_BLOCK);
+if (!startBlock) throw "Invalid Start Block";
 
 // Prepare DB CA if present
 if (process.env.DATABASE_CA_CERT) {
