@@ -8,6 +8,8 @@ import { EduLand } from "./abis/EduLand";
 
 import * as fs from "fs";
 
+const startBlock = 11171781;
+
 // Prepare DB CA if present
 if (process.env.DATABASE_CA_CERT) {
     const dbCertPath = process.env.DATABASE_URL?.split("?")
@@ -57,7 +59,7 @@ export const contracts = {
         ...getAddressStartBlock(
             {
                 address: "0x4429D17e879654fE253dEAdf5EF231e9bCF4C32E",
-                startBlock: 8527,
+                startBlock,
             },
             1
         ),
@@ -68,7 +70,7 @@ export const contracts = {
         ...getAddressStartBlock(
             {
                 address: "0xA090B0eCb026b48BF7E607066c9Ab189B320FDD0",
-                startBlock: 8529,
+                startBlock,
             },
             2
         ),
@@ -79,7 +81,7 @@ export const contracts = {
         ...getAddressStartBlock(
             {
                 address: "0xCD68f66269613AC6aa01BB1C2A7302AB84D9098A",
-                startBlock: 647823,
+                startBlock,
             },
             4
         ),
@@ -90,7 +92,7 @@ export const contracts = {
         ...getAddressStartBlock(
             {
                 address: "0x825956e27f1967da1659245De541895e530cA352",
-                startBlock: 647827,
+                startBlock,
             },
             6
         ),
